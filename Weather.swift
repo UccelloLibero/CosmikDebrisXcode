@@ -2,87 +2,69 @@
 //  Weather.swift
 //  CosmikDebris
 //
-//  Created by Maya Husic on 4/25/18.
-//  Copyright © 2018 RLM. All rights reserved.
+//  Created by Maya McPherson on 4/25/18.
+//  Copyright © 2018 MAYA. All rights reserved.
 //
 
-import Foundation
+import Foundation     // Required for UUID, URL, URLSession, JSONSerialization
+import CoreLocation   // Required for CLLocationCoordinate2D
 
-import CoreLocation
+struct Weather: Identifiable {
+    let id = UUID()
+    let summary: String
+    let iconURL: String
+    let temperature: Double
 
-struct Weather {
-    let summary:String
-    let icon:String
-    let temperature:Double
-    
-    enum SerializationError:Error {
+    enum SerializationError: Error {
         case missing(String)
         case invalid(String, Any)
     }
-    
-    
-    init(json:[String:Any]) throws {
-        guard let summary = json["summary"] as? String else {throw SerializationError.missing("summary is missing")}
-        
-        guard let icon = json["icon"] as? String else {throw SerializationError.missing("icon is missing")}
-        
-        guard let temperature = json["temperatureMax"] as? Double else {throw SerializationError.missing("temp is missing")}
-        
+
+    init(json: [String: Any]) throws {
+        guard let weatherArray = json["weather"] as? [[String: Any]],
+              let weather = weatherArray.first,
+              let summary = weather["description"] as? String else {
+            throw SerializationError.missing("summary is missing")
+        }
+
+        guard let iconCode = weather["icon"] as? String else {
+            throw SerializationError.missing("icon is missing")
+        }
+
+        guard let main = json["main"] as? [String: Any],
+              let temperature = main["temp"] as? Double else {
+            throw SerializationError.missing("temperature is missing")
+        }
+
         self.summary = summary
-        self.icon = icon
+        self.iconURL = "https://openweathermap.org/img/wn/\(iconCode)@2x.png"
         self.temperature = temperature
-        
     }
-    
-    
-    static let basePath = "https://api.darksky.net/forecast/d4951a56520718d9d9bef4664fc5db0b/"
-    
-    static func forecast (withLocation location:CLLocationCoordinate2D, completion: @escaping ([Weather]?) -> ()) {
-        
-        let url = basePath + "\(location.latitude),\(location.longitude)"
+
+    static let apiKey = "dcdefdfb65a5689109ba6c1212bce68d"
+    static let basePath = "https://api.openweathermap.org/data/2.5/weather"
+
+    static func forecast(withLocation location: CLLocationCoordinate2D, completion: @escaping ([Weather]?) -> ()) {
+        let url = basePath + "?lat=\(location.latitude)&lon=\(location.longitude)&units=imperial&appid=\(apiKey)"
         let request = URLRequest(url: URL(string: url)!)
-        
-        let task = URLSession.shared.dataTask(with: request) { (data:Data?, response:URLResponse?, error:Error?) in
-            
-            var forecastArray:[Weather] = []
-            
+
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            var forecastArray: [Weather] = []
+
             if let data = data {
-                
                 do {
-                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String:Any] {
-                        if let dailyForecasts = json["daily"] as? [String:Any] {
-                            if let dailyData = dailyForecasts["data"] as? [[String:Any]] {
-                                for dataPoint in dailyData {
-                                    if let weatherObject = try? Weather(json: dataPoint) {
-                                        forecastArray.append(weatherObject)
-                                    }
-                                }
-                            }
+                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                        if let weatherObject = try? Weather(json: json) {
+                            forecastArray.append(weatherObject)
                         }
-                        
                     }
-                }catch {
+                } catch {
                     print(error.localizedDescription)
                 }
-                
+
                 completion(forecastArray)
-                
             }
-            
-            
         }
-        
         task.resume()
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
-    
-    
 }
