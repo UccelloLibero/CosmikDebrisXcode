@@ -40,9 +40,9 @@ struct WeatherView: View {
                         .foregroundColor(getTextColor()) // Use dynamic text color
                 }
 
+                // Display the forecast for the next 5 days
                 if let weatherData = weatherData {
                     VStack(alignment: .leading, spacing: 20) {
-                        // 5-day Forecast displayed in table format with day, icon, description, and temperature
                         ForEach(0..<min(weatherData.forecastIcons.count, 5), id: \.self) { index in
                             HStack {
                                 // Day of the week
@@ -51,20 +51,20 @@ struct WeatherView: View {
                                     .foregroundColor(getTextColor()) // Use dynamic text color
                                     .frame(width: 100, alignment: .leading)
                                 
-                                // Weather icon
-                                Image(systemName: mapOpenWeatherIconToSystem(weatherData.forecastIcons[index]))
+                                // Weather icon (show only daytime icons)
+                                Image(systemName: mapOpenWeatherIconToSystem(weatherData.forecastIcons[index].replacingOccurrences(of: "n", with: "d"))) // Convert night icons to day
                                     .resizable()
                                     .frame(width: 30, height: 30)
                                     .foregroundColor(getIconColor(weatherData.forecastIcons[index])) // Dynamic icon color
                                     .padding(.horizontal, 10)
 
-                                // Weather description
-                                Text(weatherData.description.capitalized)
+                                // Weather description for the day
+                                Text(weatherData.forecastDescriptions[index].capitalized) // Update with forecast description
                                     .foregroundColor(getTextColor()) // Use dynamic text color
                                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                                // Current temperature
-                                Text("\(Int(round(Double(weatherData.currentTemp) ?? 0)))°")
+                                // Forecast temperature for the day (rounded)
+                                Text("\(Int(round(Double(weatherData.forecastTemps[index]) ?? 0)))°") // Round forecast temp
                                     .bold()
                                     .foregroundColor(getTextColor()) // Dynamic text color
                                     .frame(width: 50, alignment: .trailing)
@@ -125,8 +125,8 @@ struct WeatherView: View {
         case "10d": return "cloud.sun.rain.fill"
         case "10n": return "cloud.moon.rain.fill"
         case "11d", "11n": return "cloud.bolt.rain.fill"
-        case "13d", "13n": return "snow"
-        case "50d", "50n": return "cloud.fog.fill"
+        case "13d": return "snow"
+        case "50d": return "cloud.fog.fill"
         default: return "questionmark.circle.fill"
         }
     }
@@ -153,4 +153,5 @@ struct WeatherView: View {
         return "Unknown Day"
     }
 }
+
 
