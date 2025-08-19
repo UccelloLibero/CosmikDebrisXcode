@@ -1,4 +1,7 @@
 # Prognoza
+
+![Prognoza Demo Screenshot](https://github.com/UccelloLibero/Prognoza/blob/main/prognoza-app-preview.png)
+
 Prognoza is a minimalist weather application built with Xcode and Swift, designed to intuitive experience for checking real-time weather updates and forecasts. The application fetches weather data from the OpenWeather API and displays it in a user-friendly interface.
 
 ## Features
